@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Mon App Reconversion</title>
+</head>
+<body>
+
+<main id="app">
+
+    <!-- ÉCRAN 1 : ACCUEIL -->
+<section id="ecran-accueil">
+    <header>
+        <h1>ACCUEIL</h1>
+    </header>
+
+    <div class="liste-metiers">
+        <button class="btn-metier">développeur web</button>
+        <button class="btn-metier">data analyste</button>
+    </div>
+
+    <!-- Zone pour saisir un nouveau métier -->
+    <div class="zone-ajout">
+        <input type="text" id="input-nouveau-metier" placeholder="Nom du métier...">
+        <button id="btn-ajouter">+ Ajouter un métier</button>
+    </div>
+</section>
+
+    <!-- ÉCRAN 2 : MÉTIER -->
+<section id="ecran-metier" style="display: none;">
+    <button class="btn-retour">← Retour</button>
+    <h1>Nom du métier</h1>
+
+    <!-- NOUVEAU : Champs Code M et Taux -->
+    <div class="infos-metier">
+        <div>
+            <label for="input-code-m">Code M :</label>
+            <input type="text" id="input-code-m" placeholder="Ex: M1805">
+        </div>
+        <div>
+            <label for="input-taux">Taux :</label>
+            <input type="text" id="input-taux" placeholder="Ex: 100%">
+        </div>
+    </div>
+
+    <!-- Tes 3 boutons d'action (Centre, Entreprise, Autre) -->
+    <div class="liste-action">
+        <button id="btn-centre" class="btn-action">CENTRE</button>
+        <button id="btn-entreprise" class="btn-action">ENTREPRISE</button>
+        <button id="btn-autre" class="btn-action">AUTRE</button>
+    </div>
+</section>
+
+<!-- ÉCRAN 3 : CENTRE DE FORMATION -->
+    <section id="ecran-centre">
+        <header class="header-ecran">
+            <button class="btn-retour-metier">←</button>
+            <h1>CENTRES DE FORMATION</h1>
+        </header>
+
+        <div class="zone-ajout">
+            <input type="text" id="input-centre" placeholder="Nom du centre...">
+            <input type="text" id="input-taux-centre" placeholder="Taux du centre (ex: 85%)">
+            <button id="btn-ajouter-centre">+ Ajouter</button>
+        </div>
+        <ul id="liste-centres"></ul>
+    </section>
+
+    <!-- ÉCRAN 4 : ENTREPRISES -->
+    <section id="ecran-entreprise">
+        <header class="header-ecran">
+            <button class="btn-retour-metier">←</button>
+            <h1>ENTREPRISES</h1>
+        </header>
+
+        <div class="zone-ajout">
+            <input type="text" id="input-entreprise" placeholder="Nom de l'entreprise...">
+            <button id="btn-ajouter-entreprise">+ Ajouter</button>
+        </div>
+        <ul id="liste-entreprises"></ul>
+    </section>
+
+    <!-- ÉCRAN 5 : AUTRE (DOCUMENTS) -->
+    <section id="ecran-autre">
+        <header class="header-ecran">
+            <button class="btn-retour-metier">←</button>
+            <h1>DOCUMENTS / IMAGES</h1>
+        </header>
+
+        <div class="contenu-fichiers">
+            <p>Ajouter une capture d'écran ou un fichier :</p>
+            <input type="file" id="input-fichier">
+            <ul id="liste-fichiers"></ul>
+        </div>
+    </section>
+
+</main>
+
+    <script src="script.js"></script>
+</body>
+</html>

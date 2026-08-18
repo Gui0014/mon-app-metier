@@ -1,0 +1,154 @@
+/* Style général de la page */
+body {
+    background-color: #0f172a; /* Fond bleu nuit très sombre */
+    color: #f8fafc;            /* Texte blanc cassé */
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;   /* Centre le téléphone horizontalement */
+    align-items: center;       /* Centre le téléphone verticalement */
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Format Écran de Smartphone */
+#app {
+    background-color: #1e293b; /* Fond du téléphone un peu plus clair */
+    width: 360px;              /* Largeur standard d'un mobile */
+    min-height: 640px;         /* Hauteur du téléphone */
+    border-radius: 20px;       /* Bords arrondis */
+    border: 2px solid #334155;  /* Contour discret */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+h1 {
+    font-size: 25px; /* Tu mets la taille que tu veux ! */
+}
+
+.btn-metier {
+    background-color: #0f172a;
+    color: #ffffff;
+    border: none;
+    width: 100%;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    border: 1px solid #334155;
+}
+
+.liste-metiers {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Crée 12px d'espace uniquement ENTRE les boutons */
+}
+
+.btn-ajouter {
+    background-color: #0f172a;
+    color: #ffffff;
+    border: none;
+    width: 100%;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 16px;
+    border: 1px solid #334155;
+}
+
+#ecran-metier {
+    display: none; 
+}
+
+.header-ecran {
+    display: flex;
+    align-items: center;      /* Aligne le bouton et le titre verticalement */
+    gap: 15px;                /* Crée un espace entre le bouton et le titre */
+}
+
+.bloc-infos {
+    display: flex;
+    justify-content: space-around; /* Distribue l'espace équitablement */
+    background-color: #0f172a;    /* Ou la couleur de ton choix */
+    border: 1px solid #334155;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.liste-action {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn-action {
+    padding: 15px;
+    background-color: #0f172a;
+    color: white;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#ecran-centre,
+#ecran-entreprise,
+#ecran-autre {
+    display: none;
+}
+
+/* Champs Code M et Taux — style sombre cohérent */
+input[type="text"],
+input[type="number"],
+input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    background-color: #0f172a;      /* Même fond que tes boutons */
+    color: #ffffff;                 /* Texte blanc */
+    border: 1px solid #334155;      /* Bordure discrète */
+    border-radius: 8px;             /* Arrondi comme les boutons */
+    font-size: 16px;
+    box-sizing: border-box;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+/* Pour que le placeholder soit joli aussi */
+input::placeholder {
+    color: #94a3b8; /* Gris bleu doux */
+}
+
+/* Fenêtre modale pour afficher les fichiers */
+#modal-fichier {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+#modal-fichier .contenu {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+}
+
+#modal-fichier img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+#modal-fichier iframe {
+    width: 80vw;
+    height: 80vh;
+    border: none;
+    border-radius: 8px;
+}
