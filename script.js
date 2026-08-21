@@ -1,6 +1,6 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzOX9uOVJOuBJPM8JMMLEeE03ZILXHspaBIugCrnbvgOolLDsIlhKYHwsZmntf7YK45/exec";
 
-let listeMetiers = []; 
+let listeMetiers = [];
 let indexMetierActuel = -1;
 
 // Charger toutes les données depuis Google Sheets
@@ -61,7 +61,7 @@ async function envoyerVersGoogleSheets(action, payload) {
 }
 
 // ==========================================
-// 1. DÉCLARATION DES ÉCRANS ET ÉLÉMENTS
+// 1. ÉCRANS ET ÉLÉMENTS
 // ==========================================
 
 const ecranAccueil = document.getElementById('ecran-accueil');
@@ -97,7 +97,7 @@ const inputFichier = document.getElementById('input-fichier');
 const listeFichiers = document.getElementById('liste-fichiers');
 
 // ==========================================
-// 3. AFFICHAGE DES MÉTIERS
+// 2. AFFICHAGE DES MÉTIERS
 // ==========================================
 
 function afficherMetiers() {
@@ -131,14 +131,14 @@ function afficherMetiers() {
 }
 
 // ==========================================
-// 4. AFFICHAGE DES CENTRES
+// 3. AFFICHAGE DES CENTRES
 // ==========================================
 
 function afficherCentres() {
     if (indexMetierActuel === -1) return;
     listeCentres.innerHTML = '';
 
-    listeMetiers[indexMetierActuel].centres.forEach((centreObj, i) => {
+    listeMetiers[indexMetierActuel].centres.forEach((centreObj) => {
         const li = document.createElement('li');
 
         const nomSpan = document.createElement('strong');
@@ -168,14 +168,14 @@ function afficherCentres() {
 }
 
 // ==========================================
-// 5. AFFICHAGE DES ENTREPRISES
+// 4. AFFICHAGE DES ENTREPRISES
 // ==========================================
 
 function afficherEntreprises() {
     if (indexMetierActuel === -1) return;
     listeEntreprises.innerHTML = '';
 
-    listeMetiers[indexMetierActuel].entreprises.forEach((entrepriseObj, i) => {
+    listeMetiers[indexMetierActuel].entreprises.forEach((entrepriseObj) => {
         const li = document.createElement('li');
 
         const nomSpan = document.createElement('strong');
@@ -235,14 +235,14 @@ function afficherEntreprises() {
 }
 
 // ==========================================
-// 6. AFFICHAGE DES FICHIERS
+// 5. AFFICHAGE DES FICHIERS
 // ==========================================
 
 function afficherFichiers() {
     if (indexMetierActuel === -1) return;
     listeFichiers.innerHTML = '';
 
-    listeMetiers[indexMetierActuel].fichiers.forEach((fichierObj, i) => {
+    listeMetiers[indexMetierActuel].fichiers.forEach((fichierObj) => {
         const li = document.createElement('li');
         li.style.cursor = "pointer";
 
@@ -285,7 +285,7 @@ function afficherFichiers() {
 }
 
 // ==========================================
-// 7. AJOUTS
+// 6. AJOUTS
 // ==========================================
 
 btnAjouter.addEventListener('click', () => {
@@ -371,7 +371,7 @@ inputFichier.addEventListener('change', (e) => {
 });
 
 // ==========================================
-// 8. NAVIGATION
+// 7. NAVIGATION
 // ==========================================
 
 btnRetourAccueil.addEventListener('click', () => {
@@ -407,7 +407,7 @@ retoursMetier.forEach(bouton => {
 });
 
 // ==========================================
-// 9. MODALE FICHIERS
+// 8. MODALE FICHIERS
 // ==========================================
 
 const modal = document.createElement('div');
@@ -451,7 +451,7 @@ panzoomScript.src = "https://unpkg.com/@panzoom/panzoom/dist/panzoom.min.js";
 document.head.appendChild(panzoomScript);
 
 // ==========================================
-// 10. CHARGEMENT INITIAL
+// 9. CHARGEMENT INITIAL
 // ==========================================
 
 chargerDepuisGoogleSheets();
