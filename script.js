@@ -5,58 +5,64 @@ let indexMetierActuel = -1;
 
 // Charger toutes les données depuis Google Sheets
 async function chargerDepuisGoogleSheets() {
-    const response = await fetch(API_URL);
-    const data = await response.json();
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
 
-    const metiersMap = {};
+        const metiersMap = {};
 
-    data.forEach(row => {
-        const nom = row["Métier"];
-        if (!metiersMap[nom]) {
-            metiersMap[nom] = {
-                nom,
-                codeM: row["CodeM"] || "",
-                taux: row["Taux"] || "",
-                centres: [],
-                entreprises: [],
-                fichiers: []
-            };
-        }
+        data.forEach(row => {
+            const nom = row["Métier"];
+            if (!nom) return;
 
-        if (row["Centre"]) {
-            metiersMap[nom].centres.push({
-                nom: row["Centre"],
-                taux: row["TauxCentre"] || ""
-            });
-        }
+            if (!metiersMap[nom]) {
+                metiersMap[nom] = {
+                    nom,
+                    codeM: row["CodeM"] || "",
+                    taux: row["Taux"] || "",
+                    centres: [],
+                    entreprises: [],
+                    fichiers: []
+                };
+            }
 
-        if (row["Entreprise"]) {
-            metiersMap[nom].entreprises.push({
-                nom: row["Entreprise"],
-                email: row["Email"] || "Email non envoyé",
-                reponse: row["Reponse"] || "En attente"
-            });
-        }
+            if (row["Centre"]) {
+                metiersMap[nom].centres.push({
+                    nom: row["Centre"],
+                    taux: row["TauxCentre"] || ""
+                });
+            }
 
-        if (row["FichierNom"]) {
-            metiersMap[nom].fichiers.push({
-                nom: row["FichierNom"],
-                type: row["FichierType"],
-                contenu: row["FichierContenu"]
-            });
-        }
-    });
+            if (row["Entreprise"]) {
+                metiersMap[nom].entreprises.push({
+                    nom: row["Entreprise"],
+                    email: row["Email"] || "Email non envoyé",
+                    reponse: row["Reponse"] || "En attente"
+                });
+            }
 
-    listeMetiers = Object.values(metiersMap);
-    afficherMetiers();
+            if (row["FichierNom"]) {
+                metiersMap[nom].fichiers.push({
+                    nom: row["FichierNom"],
+                    type: row["FichierType"],
+                    contenu: row["FichierContenu"]
+                });
+            }
+        });
+
+        listeMetiers = Object.values(metiersMap);
+        afficherMetiers();
+    } catch (e) {
+        console.error("Erreur chargement Google Sheets:", e);
+    }
 }
 
-// Envoyer une action vers Google Sheets
+// Envoyer une action vers Google Sheets (Fix CORS)
 async function envoyerVersGoogleSheets(action, payload) {
     await fetch(API_URL + "?action=" + action, {
         method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
     });
 }
 
@@ -288,11 +294,11 @@ function afficherFichiers() {
 // 6. AJOUTS
 // ==========================================
 
-btnAjouter.addEventListener('click', () => {
+btnAjouter.addEventListener('click', async () => {
     const nomMetier = inputNouveauMetier.value.trim();
     if (nomMetier !== '') {
-        envoyerVersGoogleSheets("ajouter", { Métier: nomMetier });
-        chargerDepuisGoogleSheets();
+        await envoyerVersGoogleSheets("ajouter", { Métier: nomMetier });
+        await chargerDepuisGoogleSheets();
         inputNouveauMetier.value = '';
     }
 });
@@ -315,56 +321,55 @@ inputTaux.addEventListener('change', () => {
     }
 });
 
-btnAjouterCentre.addEventListener('click', () => {
+btnAjouterCentre.addEventListener('click', async () => {
     const nomCentre = inputCentre.value.trim();
     const tauxCentre = inputTauxCentre.value.trim();
 
     if (nomCentre !== '' && indexMetierActuel !== -1) {
-        envoyerVersGoogleSheets("ajouter", {
+        await envoyerVersGoogleSheets("ajouter", {
             Métier: listeMetiers[indexMetierActuel].nom,
             Centre: nomCentre,
             TauxCentre: tauxCentre
         });
 
-        chargerDepuisGoogleSheets();
+        await chargerDepuisGoogleSheets();
 
         inputCentre.value = '';
         inputTauxCentre.value = '';
     }
 });
 
-btnAjouterEntreprise.addEventListener('click', () => {
+btnAjouterEntreprise.addEventListener('click', async () => {
     const nomEntreprise = inputEntreprise.value.trim();
 
     if (nomEntreprise !== '' && indexMetierActuel !== -1) {
-        envoyerVersGoogleSheets("ajouter", {
+        await envoyerVersGoogleSheets("ajouter", {
             Métier: listeMetiers[indexMetierActuel].nom,
             Entreprise: nomEntreprise,
             Email: "Email non envoyé",
             Reponse: "En attente"
         });
 
-        chargerDepuisGoogleSheets();
+        await chargerDepuisGoogleSheets();
 
         inputEntreprise.value = '';
     }
 });
 
-// Ajout Fichier
 inputFichier.addEventListener('change', (e) => {
     const fichier = e.target.files[0];
     if (!fichier || indexMetierActuel === -1) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
-        envoyerVersGoogleSheets("ajouter", {
+    reader.onload = async () => {
+        await envoyerVersGoogleSheets("ajouter", {
             Métier: listeMetiers[indexMetierActuel].nom,
             FichierNom: fichier.name,
             FichierType: fichier.type,
             FichierContenu: reader.result
         });
 
-        chargerDepuisGoogleSheets();
+        await chargerDepuisGoogleSheets();
     };
 
     reader.readAsDataURL(fichier);
@@ -412,6 +417,7 @@ retoursMetier.forEach(bouton => {
 
 const modal = document.createElement('div');
 modal.id = 'modal-fichier';
+modal.style.display = 'none';
 modal.innerHTML = `<div class="contenu"></div>`;
 document.body.appendChild(modal);
 
@@ -424,21 +430,22 @@ function ouvrirFichier(fichierObj) {
     modal.style.display = 'flex';
     const zone = modal.querySelector('.contenu');
 
-    if (fichierObj.type.startsWith('image/')) {
+    if (fichierObj.type && fichierObj.type.startsWith('image/')) {
         zone.innerHTML = `<img id="zoom-image" src="${fichierObj.contenu}" alt="${fichierObj.nom}">`;
 
         panzoomScript.onload = () => {
             const img = document.getElementById('zoom-image');
-            const panzoom = Panzoom(img, {
-                maxScale: 5,
-                minScale: 1,
-                contain: 'outside'
-            });
-
-            img.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
+            if (typeof Panzoom !== 'undefined') {
+                const panzoom = Panzoom(img, {
+                    maxScale: 5,
+                    minScale: 1,
+                    contain: 'outside'
+                });
+                img.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
+            }
         };
     } 
-    else if (fichierObj.type.includes("pdf")) {
+    else if (fichierObj.type && fichierObj.type.includes("pdf")) {
         zone.innerHTML = `<iframe src="${fichierObj.contenu}"></iframe>`;
     } 
     else {
