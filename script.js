@@ -1,11 +1,13 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzOX9uOVJOuBJPM8JMMLEeE03ZILXHspaBIugCrnbvgOolLDsIlhKYHwsZmntf7YK45/exec";
 
+let listeMetiers = []; 
+let indexMetierActuel = -1;
+
 // Charger toutes les données depuis Google Sheets
 async function chargerDepuisGoogleSheets() {
     const response = await fetch(API_URL);
     const data = await response.json();
 
-    // Transformer le tableau Google Sheets → structure listeMetiers
     const metiersMap = {};
 
     data.forEach(row => {
@@ -68,116 +70,37 @@ const ecranCentre = document.getElementById('ecran-centre');
 const ecranEntreprise = document.getElementById('ecran-entreprise');
 const ecranAutre = document.getElementById('ecran-autre');
 
-// Éléments Écran 2 (Métier)
 const titreMetier = document.querySelector('#ecran-metier h1');
 const btnRetourAccueil = document.querySelector('#ecran-metier .btn-retour');
 const inputCodeM = document.getElementById('input-code-m');
 const inputTaux = document.getElementById('input-taux');
 
-// Boutons d'action Écran 2
 const btnCentre = document.getElementById('btn-centre');
 const btnEntreprise = document.getElementById('btn-entreprise');
 const btnAutre = document.getElementById('btn-autre');
 const retoursMetier = document.querySelectorAll('.btn-retour-metier');
 
-// Éléments Écran 1 (Accueil)
 const inputNouveauMetier = document.getElementById('input-nouveau-metier');
 const btnAjouter = document.getElementById('btn-ajouter');
 const conteneurMetiers = document.querySelector('.liste-metiers');
 
-// Éléments Écran 3 (Centres)
 const inputCentre = document.getElementById('input-centre');
 const inputTauxCentre = document.getElementById('input-taux-centre');
 const btnAjouterCentre = document.getElementById('btn-ajouter-centre');
 const listeCentres = document.getElementById('liste-centres');
 
-// Éléments Écran 4 (Entreprises)
 const inputEntreprise = document.getElementById('input-entreprise');
 const btnAjouterEntreprise = document.getElementById('btn-ajouter-entreprise');
 const listeEntreprises = document.getElementById('liste-entreprises');
 
-// Éléments Écran 5 (Fichiers)
 const inputFichier = document.getElementById('input-fichier');
 const listeFichiers = document.getElementById('liste-fichiers');
 
-let indexMetierActuel = -1;
-
-
 // ==========================================
-// 2. INITIALISATION ET SAUVEGARDE
-// ==========================================
-
-let listeMetiers = []; // sera rempli par Google Sheets
-
-const API_URL = "https://script.google.com/macros/s/AKfycbwYhKyyaCVxFRuUdFr911-cajImRFcfqZX4j0aW8h31buegPbXtlmvn_famBl5a-02N/exec";
-
-async function chargerDepuisGoogleSheets() {
-    const response = await fetch(API_URL);
-    const data = await response.json();
-
-    const metiersMap = {};
-
-    data.forEach(row => {
-        const nom = row["Métier"];
-        if (!metiersMap[nom]) {
-            metiersMap[nom] = {
-                nom,
-                codeM: row["CodeM"] || "",
-                taux: row["Taux"] || "",
-                centres: [],
-                entreprises: [],
-                fichiers: []
-            };
-        }
-
-        if (row["Centre"]) {
-            metiersMap[nom].centres.push({
-                nom: row["Centre"],
-                taux: row["TauxCentre"] || ""
-            });
-        }
-
-        if (row["Entreprise"]) {
-            metiersMap[nom].entreprises.push({
-                nom: row["Entreprise"],
-                email: row["Email"] || "Email non envoyé",
-                reponse: row["Reponse"] || "En attente"
-            });
-        }
-
-        if (row["FichierNom"]) {
-            metiersMap[nom].fichiers.push({
-                nom: row["FichierNom"],
-                type: row["FichierType"],
-                contenu: row["FichierContenu"]
-            });
-        }
-    });
-
-    listeMetiers = Object.values(metiersMap);
-    afficherMetiers();
-}
-
-async function envoyerVersGoogleSheets(action, payload) {
-    await fetch(API_URL + "?action=" + action, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "application/json" }
-    });
-}
-
-function sauvegarderMetiers() {
-    // Ne fait plus rien : tout passe par Google Sheets
-}
-
-
-
-// ==========================================
-// 3. FONCTIONS D'AFFICHAGE PAR MÉTIER
+// 3. AFFICHAGE DES MÉTIERS
 // ==========================================
 
 function afficherMetiers() {
-    sauvegarderMetiers();
     conteneurMetiers.innerHTML = '';
 
     listeMetiers.forEach((metierObj, index) => {
@@ -195,12 +118,11 @@ function afficherMetiers() {
             ecranMetier.style.display = 'block';
         });
 
-        // Suppression d'un métier avec confirmation
         nouveauBouton.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            if (confirm(`Voulez-vous vraiment supprimer le métier "${metierObj.nom}" ?`)) {
-                listeMetiers.splice(index, 1);
-                afficherMetiers();
+            if (confirm(`Supprimer le métier "${metierObj.nom}" ?`)) {
+                envoyerVersGoogleSheets("supprimer", { Métier: metierObj.nom });
+                chargerDepuisGoogleSheets();
             }
         });
 
@@ -208,48 +130,9 @@ function afficherMetiers() {
     });
 }
 
-function afficherFichiers() {
-    if (indexMetierActuel === -1) return;
-    listeFichiers.innerHTML = '';
-
-    listeMetiers[indexMetierActuel].fichiers.forEach((fichierObj, i) => {
-        const li = document.createElement('li');
-
-        if (fichierObj.type && fichierObj.type.startsWith('image/')) {
-            const img = document.createElement('img');
-            img.src = fichierObj.contenu;
-            img.style.maxWidth = '100px';
-            img.style.display = 'block';
-            img.style.margin = '5px 0';
-            li.appendChild(img);
-        }
-
-        const texteNom = document.createElement('span');
-        texteNom.textContent = fichierObj.nom + " ";
-        li.appendChild(texteNom);
-
-        // OUVERTURE DU FICHIER EN GRAND
-        li.style.cursor = "pointer";
-        li.addEventListener('click', () => {
-            ouvrirFichier(fichierObj);
-        });
-
-        // Bouton suppression
-        const btnSuppr = document.createElement('button');
-        btnSuppr.textContent = "❌";
-        btnSuppr.addEventListener('click', (e) => {
-            e.stopPropagation(); // Empêche d'ouvrir la modale en cliquant sur ❌
-            if (confirm(`Êtes-vous sûr de vouloir supprimer le fichier "${fichierObj.nom}" ?`)) {
-                listeMetiers[indexMetierActuel].fichiers.splice(i, 1);
-                sauvegarderMetiers();
-                afficherFichiers();
-            }
-        });
-
-        li.appendChild(btnSuppr);
-        listeFichiers.appendChild(li);
-    });
-}
+// ==========================================
+// 4. AFFICHAGE DES CENTRES
+// ==========================================
 
 function afficherCentres() {
     if (indexMetierActuel === -1) return;
@@ -264,14 +147,16 @@ function afficherCentres() {
         const tauxSpan = document.createElement('span');
         tauxSpan.textContent = centreObj.taux ? `(${centreObj.taux})` : "(taux non défini)";
 
-        // Bouton suppression
         const btnSuppr = document.createElement('button');
         btnSuppr.textContent = "❌";
         btnSuppr.addEventListener('click', () => {
             if (confirm(`Supprimer le centre "${centreObj.nom}" ?`)) {
-                listeMetiers[indexMetierActuel].centres.splice(i, 1);
-                sauvegarderMetiers();
-                afficherCentres();
+                envoyerVersGoogleSheets("modifier", {
+                    Métier: listeMetiers[indexMetierActuel].nom,
+                    Centre: centreObj.nom,
+                    TauxCentre: ""
+                });
+                chargerDepuisGoogleSheets();
             }
         });
 
@@ -281,6 +166,10 @@ function afficherCentres() {
         listeCentres.appendChild(li);
     });
 }
+
+// ==========================================
+// 5. AFFICHAGE DES ENTREPRISES
+// ==========================================
 
 function afficherEntreprises() {
     if (indexMetierActuel === -1) return;
@@ -292,39 +181,48 @@ function afficherEntreprises() {
         const nomSpan = document.createElement('strong');
         nomSpan.textContent = entrepriseObj.nom + " ";
 
-        // Select pour l'Email avec confirmation
+        const selEmail = document.createElement('select');
+        selEmail.innerHTML = `
+            <option value="Email non envoyé">Email non envoyé</option>
+            <option value="Email envoyé">Email envoyé</option>
+        `;
+        selEmail.value = entrepriseObj.email;
+
         selEmail.addEventListener('change', () => {
-    if (indexMetierActuel !== -1 && entrepriseObj) {
-        envoyerVersGoogleSheets("modifier", {
-            Métier: listeMetiers[indexMetierActuel].nom,
-            Entreprise: entrepriseObj.nom,
-            Email: selEmail.value
+            envoyerVersGoogleSheets("modifier", {
+                Métier: listeMetiers[indexMetierActuel].nom,
+                Entreprise: entrepriseObj.nom,
+                Email: selEmail.value
+            });
         });
-    }
-});
 
+        const selReponse = document.createElement('select');
+        selReponse.innerHTML = `
+            <option value="En attente">En attente</option>
+            <option value="Positive">Positive</option>
+            <option value="Négative">Négative</option>
+        `;
+        selReponse.value = entrepriseObj.reponse;
 
-        // Select pour la Réponse avec confirmation
         selReponse.addEventListener('change', () => {
-    if (indexMetierActuel !== -1 && entrepriseObj) {
-        envoyerVersGoogleSheets("modifier", {
-            Métier: listeMetiers[indexMetierActuel].nom,
-            Entreprise: entrepriseObj.nom,
-            Reponse: selReponse.value
+            envoyerVersGoogleSheets("modifier", {
+                Métier: listeMetiers[indexMetierActuel].nom,
+                Entreprise: entrepriseObj.nom,
+                Reponse: selReponse.value
+            });
         });
-    }
-});
 
-
-
-        // Bouton suppression avec confirmation
         const btnSuppr = document.createElement('button');
         btnSuppr.textContent = "❌";
         btnSuppr.addEventListener('click', () => {
-            if (confirm(`Êtes-vous sûr de vouloir supprimer l'entreprise "${entrepriseObj.nom}" ?`)) {
-                listeMetiers[indexMetierActuel].entreprises.splice(i, 1);
-                sauvegarderMetiers();
-                afficherEntreprises();
+            if (confirm(`Supprimer "${entrepriseObj.nom}" ?`)) {
+                envoyerVersGoogleSheets("modifier", {
+                    Métier: listeMetiers[indexMetierActuel].nom,
+                    Entreprise: entrepriseObj.nom,
+                    Email: "",
+                    Reponse: ""
+                });
+                chargerDepuisGoogleSheets();
             }
         });
 
@@ -336,6 +234,10 @@ function afficherEntreprises() {
     });
 }
 
+// ==========================================
+// 6. AFFICHAGE DES FICHIERS
+// ==========================================
+
 function afficherFichiers() {
     if (indexMetierActuel === -1) return;
     listeFichiers.innerHTML = '';
@@ -344,7 +246,6 @@ function afficherFichiers() {
         const li = document.createElement('li');
         li.style.cursor = "pointer";
 
-        // Image miniature
         if (fichierObj.type && fichierObj.type.startsWith('image/')) {
             const img = document.createElement('img');
             img.src = fichierObj.contenu;
@@ -354,27 +255,27 @@ function afficherFichiers() {
             li.appendChild(img);
         }
 
-        // Nom du fichier
         const texteNom = document.createElement('span');
         texteNom.textContent = fichierObj.nom + " ";
         li.appendChild(texteNom);
 
-        // OUVERTURE DU FICHIER
         li.addEventListener('click', () => {
             ouvrirFichier(fichierObj);
         });
 
-        // Bouton suppression
         const btnSuppr = document.createElement('button');
         btnSuppr.textContent = "❌";
 
-        // Empêche le clic sur ❌ d'ouvrir la modale
         btnSuppr.addEventListener('click', (e) => {
             e.stopPropagation();
             if (confirm(`Supprimer "${fichierObj.nom}" ?`)) {
-                listeMetiers[indexMetierActuel].fichiers.splice(i, 1);
-                sauvegarderMetiers();
-                afficherFichiers();
+                envoyerVersGoogleSheets("modifier", {
+                    Métier: listeMetiers[indexMetierActuel].nom,
+                    FichierNom: fichierObj.nom,
+                    FichierType: "",
+                    FichierContenu: ""
+                });
+                chargerDepuisGoogleSheets();
             }
         });
 
@@ -383,50 +284,37 @@ function afficherFichiers() {
     });
 }
 
-
 // ==========================================
-// 4. ÉVÉNEMENTS D'AJOUT ET MODIFICATION
+// 7. AJOUTS
 // ==========================================
 
 btnAjouter.addEventListener('click', () => {
     const nomMetier = inputNouveauMetier.value.trim();
     if (nomMetier !== '') {
-        envoyerVersGoogleSheets("ajouter", {
-            Métier: nomMetier
-        });
+        envoyerVersGoogleSheets("ajouter", { Métier: nomMetier });
         chargerDepuisGoogleSheets();
         inputNouveauMetier.value = '';
     }
 });
 
-
-// Confirmation de modification pour Code M
 inputCodeM.addEventListener('change', () => {
     if (indexMetierActuel !== -1) {
-        const nouvelleValeur = inputCodeM.value.trim();
-
         envoyerVersGoogleSheets("modifier", {
             Métier: listeMetiers[indexMetierActuel].nom,
-            CodeM: nouvelleValeur
+            CodeM: inputCodeM.value.trim()
         });
     }
 });
 
-
-// Confirmation de modification pour Taux
 inputTaux.addEventListener('change', () => {
     if (indexMetierActuel !== -1) {
-        const nouvelleValeur = inputTaux.value.trim();
-
         envoyerVersGoogleSheets("modifier", {
             Métier: listeMetiers[indexMetierActuel].nom,
-            Taux: nouvelleValeur
+            Taux: inputTaux.value.trim()
         });
     }
 });
 
-
-// Ajout Centre
 btnAjouterCentre.addEventListener('click', () => {
     const nomCentre = inputCentre.value.trim();
     const tauxCentre = inputTauxCentre.value.trim();
@@ -445,8 +333,6 @@ btnAjouterCentre.addEventListener('click', () => {
     }
 });
 
-
-// Ajout Entreprise
 btnAjouterEntreprise.addEventListener('click', () => {
     const nomEntreprise = inputEntreprise.value.trim();
 
@@ -463,7 +349,6 @@ btnAjouterEntreprise.addEventListener('click', () => {
         inputEntreprise.value = '';
     }
 });
-
 
 // Ajout Fichier
 inputFichier.addEventListener('change', (e) => {
@@ -485,10 +370,8 @@ inputFichier.addEventListener('change', (e) => {
     reader.readAsDataURL(fichier);
 });
 
-
-
 // ==========================================
-// 5. NAVIGATION ENTRE LES ÉCRANS
+// 8. NAVIGATION
 // ==========================================
 
 btnRetourAccueil.addEventListener('click', () => {
@@ -523,21 +406,20 @@ retoursMetier.forEach(bouton => {
     });
 });
 
-afficherMetiers();
+// ==========================================
+// 9. MODALE FICHIERS
+// ==========================================
 
-// Création de la modale
 const modal = document.createElement('div');
 modal.id = 'modal-fichier';
 modal.innerHTML = `<div class="contenu"></div>`;
 document.body.appendChild(modal);
 
-// Fermer la modale en cliquant autour
 modal.addEventListener('click', () => {
     modal.style.display = 'none';
     modal.querySelector('.contenu').innerHTML = '';
 });
 
-// Fonction pour ouvrir un fichier
 function ouvrirFichier(fichierObj) {
     modal.style.display = 'flex';
     const zone = modal.querySelector('.contenu');
@@ -567,3 +449,9 @@ function ouvrirFichier(fichierObj) {
 const panzoomScript = document.createElement('script');
 panzoomScript.src = "https://unpkg.com/@panzoom/panzoom/dist/panzoom.min.js";
 document.head.appendChild(panzoomScript);
+
+// ==========================================
+// 10. CHARGEMENT INITIAL
+// ==========================================
+
+chargerDepuisGoogleSheets();
