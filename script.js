@@ -3,6 +3,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzOX9uOVJOuBJPM8JMMLEeE
 let listeMetiers = [];
 let indexMetierActuel = -1;
 
+// ==========================================
+// 0. CHARGEMENT ET ENVOI GOOGLE SHEETS
+// ==========================================
+
 async function chargerDepuisGoogleSheets() {
     try {
         const response = await fetch(API_URL + "?action=charger");
@@ -18,48 +22,55 @@ async function chargerDepuisGoogleSheets() {
         listeMetiers = [];
         const metiersMap = {};
 
-    data.forEach(row => {
-        const nom = row["Métier"];
-        if (!metiersMap[nom]) {
-            metiersMap[nom] = {
-                nom,
-                codeM: row["CodeM"] || "",
-                taux: row["Taux"] || "",
-                centres: [],
-                entreprises: [],
-                fichiers: []
-            };
-        }
+        data.forEach(row => {
+            const nomMetier = row["Métier"];
+            if (!nomMetier) return;
 
-        if (row["Centre"]) {
-            metiersMap[nom].centres.push({
-                nom: row["Centre"],
-                taux: row["TauxCentre"] || ""
-            });
-        }
+            if (!metiersMap[nomMetier]) {
+                metiersMap[nomMetier] = {
+                    nom: nomMetier,
+                    codeM: row["CodeM"] || "",
+                    taux: row["Taux"] || "",
+                    centres: [],
+                    entreprises: [],
+                    fichiers: []
+                };
+            }
 
-        if (row["Entreprise"]) {
-            metiersMap[nom].entreprises.push({
-                nom: row["Entreprise"],
-                email: row["Email"] || "Email non envoyé",
-                reponse: row["Reponse"] || "En attente"
-            });
-        }
+            const m = metiersMap[nomMetier];
 
-        if (row["FichierNom"]) {
-            metiersMap[nom].fichiers.push({
-                nom: row["FichierNom"],
-                type: row["FichierType"],
-                contenu: row["FichierContenu"]
-            });
-        }
-    });
+            if (row["Centre"] && !m.centres.some(c => c.nom === row["Centre"])) {
+                m.centres.push({
+                    nom: row["Centre"],
+                    taux: row["TauxCentre"] || ""
+                });
+            }
 
-    listeMetiers = Object.values(metiersMap);
-    afficherMetiers();
+            if (row["Entreprise"] && !m.entreprises.some(e => e.nom === row["Entreprise"])) {
+                m.entreprises.push({
+                    nom: row["Entreprise"],
+                    email: row["Email"] || "Email non envoyé",
+                    reponse: row["Reponse"] || "En attente"
+                });
+            }
+
+            if (row["FichierNom"] && !m.fichiers.some(f => f.nom === row["FichierNom"])) {
+                m.fichiers.push({
+                    nom: row["FichierNom"],
+                    type: row["FichierType"] || "",
+                    contenu: row["FichierContenu"] || ""
+                });
+            }
+        });
+
+        listeMetiers = Object.values(metiersMap);
+        afficherMetiers();
+    } catch (e) {
+        console.error("Erreur lors du chargement :", e);
+    }
 }
 
-// Envoyer une action vers Google Sheets
+// Envoyer une action vers Google Sheets sans CORS OPTIONS
 async function envoyerVersGoogleSheets(action, payload) {
     try {
         const formData = new URLSearchParams();
@@ -132,11 +143,11 @@ function afficherMetiers() {
             ecranMetier.style.display = 'block';
         });
 
-        nouveauBouton.addEventListener('contextmenu', (e) => {
+        nouveauBouton.addEventListener('contextmenu', async (e) => {
             e.preventDefault();
             if (confirm(`Supprimer le métier "${metierObj.nom}" ?`)) {
-                envoyerVersGoogleSheets("supprimer", { Métier: metierObj.nom });
-                chargerDepuisGoogleSheets();
+                await envoyerVersGoogleSheets("supprimer", { Métier: metierObj.nom });
+                await chargerDepuisGoogleSheets();
             }
         });
 
@@ -288,16 +299,20 @@ function afficherFichiers() {
         const btnSuppr = document.createElement('button');
         btnSuppr.textContent = "❌";
 
-        btnSuppr.addEventListener('click', (e) => {
+        btnSuppr.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (confirm(`Supprimer "${fichierObj.nom}" ?`)) {
-                envoyerVersGoogleSheets("modifier", {
+                await envoyerVersGoogleSheets("modifier", {
                     Métier: listeMetiers[indexMetierActuel].nom,
                     FichierNom: fichierObj.nom,
                     FichierType: "",
                     FichierContenu: ""
                 });
-                chargerDepuisGoogleSheets();
+                await envoyerVersGoogleSheets("modifier", {
+                    Métier: listeMetiers[indexMetierActuel].nom,
+                    FichierNom: ""
+                });
+                await chargerDepuisGoogleSheets();
             }
         });
 
@@ -310,11 +325,11 @@ function afficherFichiers() {
 // 6. AJOUTS
 // ==========================================
 
-btnAjouter.addEventListener('click', () => {
+btnAjouter.addEventListener('click', async () => {
     const nomMetier = inputNouveauMetier.value.trim();
     if (nomMetier !== '') {
-        envoyerVersGoogleSheets("ajouter", { Métier: nomMetier });
-        chargerDepuisGoogleSheets();
+        await envoyerVersGoogleSheets("ajouter", { Métier: nomMetier });
+        await chargerDepuisGoogleSheets();
         inputNouveauMetier.value = '';
     }
 });
@@ -337,36 +352,36 @@ inputTaux.addEventListener('change', () => {
     }
 });
 
-btnAjouterCentre.addEventListener('click', () => {
+btnAjouterCentre.addEventListener('click', async () => {
     const nomCentre = inputCentre.value.trim();
     const tauxCentre = inputTauxCentre.value.trim();
 
     if (nomCentre !== '' && indexMetierActuel !== -1) {
-        envoyerVersGoogleSheets("ajouter", {
+        await envoyerVersGoogleSheets("ajouter", {
             Métier: listeMetiers[indexMetierActuel].nom,
             Centre: nomCentre,
             TauxCentre: tauxCentre
         });
 
-        chargerDepuisGoogleSheets();
+        await chargerDepuisGoogleSheets();
 
         inputCentre.value = '';
         inputTauxCentre.value = '';
     }
 });
 
-btnAjouterEntreprise.addEventListener('click', () => {
+btnAjouterEntreprise.addEventListener('click', async () => {
     const nomEntreprise = inputEntreprise.value.trim();
 
     if (nomEntreprise !== '' && indexMetierActuel !== -1) {
-        envoyerVersGoogleSheets("ajouter", {
+        await envoyerVersGoogleSheets("ajouter", {
             Métier: listeMetiers[indexMetierActuel].nom,
             Entreprise: nomEntreprise,
             Email: "Email non envoyé",
             Reponse: "En attente"
         });
 
-        chargerDepuisGoogleSheets();
+        await chargerDepuisGoogleSheets();
 
         inputEntreprise.value = '';
     }
@@ -378,15 +393,15 @@ inputFichier.addEventListener('change', (e) => {
     if (!fichier || indexMetierActuel === -1) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
-        envoyerVersGoogleSheets("ajouter", {
+    reader.onload = async () => {
+        await envoyerVersGoogleSheets("ajouter", {
             Métier: listeMetiers[indexMetierActuel].nom,
             FichierNom: fichier.name,
             FichierType: fichier.type,
             FichierContenu: reader.result
         });
 
-        chargerDepuisGoogleSheets();
+        await chargerDepuisGoogleSheets();
     };
 
     reader.readAsDataURL(fichier);
