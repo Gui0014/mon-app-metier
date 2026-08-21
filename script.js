@@ -53,11 +53,17 @@ async function chargerDepuisGoogleSheets() {
 
 // Envoyer une action vers Google Sheets
 async function envoyerVersGoogleSheets(action, payload) {
-    await fetch(API_URL + "?action=" + action, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "application/json" }
-    });
+    try {
+        const formData = new URLSearchParams();
+        formData.append("payload", JSON.stringify(payload));
+
+        await fetch(API_URL + "?action=" + action, {
+            method: "POST",
+            body: formData
+        });
+    } catch (e) {
+        console.error("Erreur lors de l'envoi :", e);
+    }
 }
 
 // ==========================================
