@@ -3,11 +3,17 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzOX9uOVJOuBJPM8JMMLEeE
 let listeMetiers = [];
 let indexMetierActuel = -1;
 
-// Charger toutes les données depuis Google Sheets
+// Charger toutes les données
 async function chargerDepuisGoogleSheets() {
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(API_URL + "?action=charger");
         const data = await response.json();
+
+        // Sécurité : Vérifier que data est bien un tableau
+        if (!Array.isArray(data)) {
+            console.error("Réponse invalide du serveur :", data);
+            return;
+        }
 
         const metiersMap = {};
 
@@ -53,19 +59,24 @@ async function chargerDepuisGoogleSheets() {
         listeMetiers = Object.values(metiersMap);
         afficherMetiers();
     } catch (e) {
-        console.error("Erreur chargement Google Sheets:", e);
+        console.error("Erreur lors du chargement :", e);
     }
 }
 
-// Envoyer une action vers Google Sheets (Fix CORS)
+// Envoyer vers Google Sheets sans déclencher de requête CORS OPTIONS
 async function envoyerVersGoogleSheets(action, payload) {
-    await fetch(API_URL + "?action=" + action, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-    });
-}
+    try {
+        const formData = new URLSearchParams();
+        formData.append("payload", JSON.stringify(payload));
 
+        await fetch(API_URL + "?action=" + action, {
+            method: "POST",
+            body: formData // Pas de header personnalisé = pas de blocage CORS
+        });
+    } catch (e) {
+        console.error("Erreur lors de l'envoi :", e);
+    }
+}
 // ==========================================
 // 1. ÉCRANS ET ÉLÉMENTS
 // ==========================================
