@@ -3,12 +3,20 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzOX9uOVJOuBJPM8JMMLEeE
 let listeMetiers = [];
 let indexMetierActuel = -1;
 
-// Charger toutes les données depuis Google Sheets
 async function chargerDepuisGoogleSheets() {
-    const response = await fetch(API_URL);
-    const data = await response.json();
+    try {
+        const response = await fetch(API_URL + "?action=charger");
+        const data = await response.json();
 
-    const metiersMap = {};
+        // Vérification que les données reçues sont bien un tableau
+        if (!Array.isArray(data)) {
+            console.error("Réponse Google Sheets invalide :", data);
+            return;
+        }
+
+        // Réinitialisation des listes
+        listeMetiers = [];
+        const metiersMap = {};
 
     data.forEach(row => {
         const nom = row["Métier"];
